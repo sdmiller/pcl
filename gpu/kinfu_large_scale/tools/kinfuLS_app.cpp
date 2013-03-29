@@ -128,7 +128,7 @@ vector<string> getPcdFilesInDir(const string& directory)
     if (fs::is_regular_file(pos->status()) )
       if (fs::extension(*pos) == ".pcd")
       {
-#if BOOST_FILESYSTEM_VERSION == 3
+#if BOOST_FILESYSTEM_VERSION == 3 || BOOST_VERSION < 104400
         result.push_back (pos->path ().string ());
 #else
         result.push_back (pos->path ());

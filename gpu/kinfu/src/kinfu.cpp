@@ -335,7 +335,7 @@ pcl::gpu::KinfuTracker::operator() (const DepthMap& depth_raw,
             {
               if (pcl_isnan (det)) cout << "qnan" << endl;
 
-              reset ();
+              //reset (); // SDM Taking out so we never lose our beautiful results
               return (false);
             }
             //float maxc = A.maxCoeff();
@@ -365,8 +365,19 @@ pcl::gpu::KinfuTracker::operator() (const DepthMap& depth_raw,
       if (global_time_ == 0)
         ++global_time_;
 
-      Matrix3frm Rcurr = rmats_[global_time_ - 1];
-      Vector3f   tcurr = tvecs_[global_time_ - 1];
+      Matrix3frm Rcurr;// = rmats_[global_time_ - 1];
+      Vector3f   tcurr;// = tvecs_[global_time_ - 1];
+
+      if(hint)
+      {
+        Rcurr = hint->rotation().matrix();
+        tcurr = hint->translation().matrix();
+      }
+      else
+      {
+        Rcurr = rmats_[global_time_ - 1]; // tranform to global coo for ith camera pose
+        tcurr = tvecs_[global_time_ - 1];
+      }
 
       rmats_.push_back (Rcurr);
       tvecs_.push_back (tcurr);
@@ -509,6 +520,10 @@ pcl::gpu::KinfuTracker::getLastFrameNormals (DeviceArray2D<NormalType>& normals)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void 
 pcl::gpu::KinfuTracker::disableIcp() { disable_icp_ = true; }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void 
+pcl::gpu::KinfuTracker::enableIcp() { disable_icp_ = false; }
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////

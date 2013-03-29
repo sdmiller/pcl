@@ -179,7 +179,10 @@ namespace pcl
         getLastFrameNormals (DeviceArray2D<NormalType>& normals) const;
 
         /** \brief Disables ICP forever */
-        void disableIcp();
+        void disableIcp ();
+
+        /** \brief Enables ICP */
+        void enableIcp ();
 
       private:
         

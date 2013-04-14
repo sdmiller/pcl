@@ -11,16 +11,18 @@ pcl::simulation::SumReduce::SumReduce (int width, int height, int levels) : leve
   // Load shader
   sum_program_ = gllib::Program::Ptr (new gllib::Program ());
   // TODO: to remove file dependency include the shader source in the binary
-  if (!sum_program_->addShaderFile ("sum_score.vert", gllib::VERTEX))
+  std::string vertex_file = std::string (PCL_SOURCE_DIR)+"/simulation/src/sum_score.vert";
+  if (!sum_program_->addShaderFile (vertex_file, gllib::VERTEX))
   {
     std::cout << "Failed loading vertex shader" << std::endl;
     exit (-1);
   }
 
   // TODO: to remove file dependency include the shader source in the binary
-  if (!sum_program_->addShaderFile ("sum_score.frag", gllib::FRAGMENT))
+  std::string fragment_file = std::string (PCL_SOURCE_DIR)+"/simulation/src/sum_score.frag";
+  if (!sum_program_->addShaderFile (fragment_file, gllib::FRAGMENT))
   {
-    std::cout << "Failed loading fragment shader" << std::endl;
+    std::cout << "Failed loading fragment shader " << fragment_file << std::endl;
     exit (-1);
   }
 

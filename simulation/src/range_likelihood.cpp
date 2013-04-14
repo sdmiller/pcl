@@ -280,15 +280,16 @@ pcl::simulation::RangeLikelihood::RangeLikelihood (int rows, int cols, int row_h
   // Load shader
   likelihood_program_ = gllib::Program::Ptr (new gllib::Program ());
   // TODO: to remove file dependency include the shader source in the binary
-  if (!likelihood_program_->addShaderFile ("compute_score.vert", gllib::VERTEX))
+  std::string shader_file = std::string(PCL_SOURCE_DIR)+"/simulation/src/compute_score.vert";
+  if (!likelihood_program_->addShaderFile (shader_file, gllib::VERTEX))
   {
-    std::cout << "Failed loading vertex shader" << std::endl;
+    std::cout << "Failed loading vertex shader " << shader_file << std::endl;
     exit (-1);
   }
-
-  if (!likelihood_program_->addShaderFile ("compute_score.frag", gllib::FRAGMENT))
+  std::string fragment_file = std::string(PCL_SOURCE_DIR)+"/simulation/src/compute_score.frag";
+  if (!likelihood_program_->addShaderFile (fragment_file, gllib::FRAGMENT))
   {
-    std::cout << "Failed loading fragment shader" << std::endl;
+    std::cout << "Failed loading fragment shader: " << fragment_file << std::endl;
     exit (-1);
   }
 
@@ -672,9 +673,9 @@ pcl::simulation::RangeLikelihood::getPointCloud (pcl::PointCloud<pcl::PointXYZRG
     for (int x = 0; x < col_width_ ; ++x)  // camera_width_
     {
       // Find XYZ from normalized 0->1 mapped disparity
-      int idx = points_added; // y*camera_width_ + x;
       float d = depth_buffer_[y*camera_width_ + x] ;
-      if (d < 1.0) // only add points with depth buffer less than max (20m) range
+      pcl::PointXYZRGB &pt = pc->at (x, row_height_ - y - 1); // Their coordinates are flipped
+      if (d < 1.0 && d > 0) // only add points with depth buffer less than max (20m) range
       {
         float z = zf*zn/((zf-zn)*(d - zf/(zf-zn)));
 
@@ -684,21 +685,30 @@ pcl::simulation::RangeLikelihood::getPointCloud (pcl::PointCloud<pcl::PointXYZRG
         // But in this class we invert this to be 0 (near, 0.7m) and 1 (far, 20m)
         // ... so by negating y we get to a right-hand computer vision system
         // which is also used by PCL and OpenNi
-        pc->points[idx].z = z;
-        pc->points[idx].x = (static_cast<float> (x)-camera_cx_) * z * (-camera_fx_reciprocal_);
-        pc->points[idx].y = (static_cast<float> (y)-camera_cy_) * z * (-camera_fy_reciprocal_);
+        pt.z = z;
+        pt.x = (static_cast<float> (x)-camera_cx_) * z * (-camera_fx_reciprocal_);
+        pt.y = (static_cast<float> (y)-camera_cy_) * z * (-camera_fy_reciprocal_);
 
 	int rgb_idx = y*col_width_ + x;  //camera_width_
-        pc->points[idx].b = color_buffer[rgb_idx*3+2]; // blue
-        pc->points[idx].g = color_buffer[rgb_idx*3+1]; // green
-        pc->points[idx].r = color_buffer[rgb_idx*3]; // red
-        points_added++;
+        //pt.b = color_buffer[rgb_idx*3+2]; // blue
+        //pt.g = color_buffer[rgb_idx*3+1]; // green
+        //pt.r = color_buffer[rgb_idx*3]; // red
+        //// Color blue iff within visible range
+        if (-1*pt.z <= 2.0 && -1*pt.z >= 0.7)
+        {
+          pt.b = 255;
+          pt.g = pt.r = 0;
+        }
+        else
+        {
+          pt.r = 255;
+          pt.b = pt.g = 0;
+        }
       }
+      else
+        pt.x = pt.y = pt.z = std::numeric_limits<float>::quiet_NaN ();
     }
   }
-  pc->width    = 1;
-  pc->height   = points_added;
-  pc->points.resize (points_added);
 
   if (make_global)
   {
@@ -866,7 +876,7 @@ pcl::simulation::RangeLikelihood::computeScoresShader (float* reference)
 {
   if (gllib::getGLError () != GL_NO_ERROR)
   {
-    std::cout << "GL error: RangeLikelihood::compute_scores_shader - enter" << std::endl;
+    // std::cout << "GL error: RangeLikelihood::compute_scores_shader - enter" << std::endl;
   }
 
 #ifdef SIMULATION_DEBUG
@@ -930,7 +940,7 @@ pcl::simulation::RangeLikelihood::computeScoresShader (float* reference)
 
   if (gllib::getGLError () != GL_NO_ERROR)
   {
-    std::cout << "GL error: RangeLikelihood::compute_scores_shader - exit" << std::endl;
+    //std::cout << "GL error: RangeLikelihood::compute_scores_shader - exit" << std::endl;
   }
 
   if (enable_depth_test == GL_TRUE) glEnable (GL_DEPTH_TEST);
@@ -1056,7 +1066,7 @@ RangeLikelihood::getColorBuffer ()
 
   if (color_buffer_dirty_)
   {
-    std::cout << "Read color buffer" << std::endl;
+    //std::cout << "Read color buffer" << std::endl;
 
     // Read Color
     GLint old_read_buffer;

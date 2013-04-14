@@ -297,7 +297,8 @@ pcl::simulation::Quad::render ()
 
 pcl::simulation::TexturedQuad::TexturedQuad (int width, int height) : width_ (width), height_ (height)
 {
-  program_ = gllib::Program::loadProgramFromFile ("single_texture.vert", "single_texture.frag");
+  program_ = gllib::Program::loadProgramFromFile (std::string (PCL_SOURCE_DIR)+"/simulation/src/single_texture.vert", 
+                                                  std::string (PCL_SOURCE_DIR)+"/simulation/src/single_texture.frag");
   program_->use ();
   Eigen::Matrix<float, 4, 4> MVP;
   MVP.setIdentity();

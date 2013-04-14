@@ -232,13 +232,13 @@ pcl::simulation::gllib::Program::loadProgramFromFile (const std::string& vertex_
   Program::Ptr program = gllib::Program::Ptr (new gllib::Program ());
   if (!program->addShaderFile (vertex_shader_file, gllib::VERTEX))
   {
-    std::cerr << "Failed loading vertex shader" << std::endl;
+    std::cerr << "Failed loading vertex shader " << vertex_shader_file << std::endl;
   }
 
   // TODO: to remove file dependency include the shader source in the binary
   if (!program->addShaderFile (fragment_shader_file, gllib::FRAGMENT))
   {
-    std::cerr << "Failed loading fragment shader" << std::endl;
+    std::cerr << "Failed loading fragment shader " << fragment_shader_file << std::endl;
   }
 
   program->link ();

@@ -24,6 +24,7 @@
 
 #cmakedefine USE_ROS
 
+#define PCL_SOURCE_DIR "@PCL_SOURCE_DIR@"
 // SSE macros
 #cmakedefine HAVE_POSIX_MEMALIGN
 #cmakedefine HAVE_MM_MALLOC

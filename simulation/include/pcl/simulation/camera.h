@@ -64,12 +64,38 @@ namespace pcl
       setPitch(double pitch) { pitch_ = pitch; updatePose (); }
 
       double
-      getYaw () const { return yaw_; }
+      getYaw () const {return yaw_; }
       void
       setYaw (double yaw) { yaw_ = yaw; updatePose (); }
 
-      Eigen::Isometry3d
+      inline const Eigen::Isometry3d &
       getPose () const { return pose_; }
+      
+      inline Eigen::Isometry3d &
+      getPose () { return pose_; }
+
+      inline void
+      setPose (const Eigen::Isometry3d &pose)
+      {pose_ = pose; updateXYZRPY ();}
+
+      inline void
+      updateXYZRPY ()
+      {
+        generateXYZYPR (pose_, roll_, pitch_, yaw_, x_, y_, z_);
+      }
+
+      inline void 
+      generateXYZYPR(const Eigen::Isometry3d &trans, 
+      double &rx, double &ry, double &rz, double &tx, double &ty, double &tz)
+      {
+        Eigen::Vector3d xyz = trans.translation();
+        tx = xyz(0); ty = xyz(1); tz = xyz(2);
+        Eigen::Matrix3d R = trans.rotation();
+        rx = atan2(R(2,1),R(2,2));
+        ry = atan2( -R(2,0), sqrt(pow(R(2,1),2)+pow(R(2,2),2)) );
+        rz = atan2( R(1,0), R(0,0) );
+      }
+
 
       void set (double x, double y, double z, double roll, double pitch, double yaw)
       {

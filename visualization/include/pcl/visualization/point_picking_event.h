@@ -40,6 +40,7 @@
 
 #include <pcl/pcl_macros.h>
 #include <pcl/visualization/vtk.h>
+#include <vector>
 
 namespace pcl
 {

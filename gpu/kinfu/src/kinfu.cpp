@@ -71,7 +71,7 @@ namespace pcl
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-pcl::gpu::KinfuTracker::KinfuTracker (int rows, int cols) : rows_(rows), cols_(cols), global_time_(0), max_icp_distance_(0), integration_metric_threshold_(0.f), disable_icp_(false)
+pcl::gpu::KinfuTracker::KinfuTracker (int rows, int cols) : rows_(rows), cols_(cols), global_time_(0), max_icp_distance_(0), integration_metric_threshold_(0.f), disable_icp_(false), will_be_reset_ (false)
 {
   const Vector3f volume_size = Vector3f::Constant (VOLUME_SIZE);
   const Vector3i volume_resolution(VOLUME_X, VOLUME_Y, VOLUME_Z);
@@ -232,6 +232,11 @@ bool
 pcl::gpu::KinfuTracker::operator() (const DepthMap& depth_raw, 
     Eigen::Affine3f *hint)
 {  
+  if (will_be_reset_)
+  {
+    this->reset ();
+    will_be_reset_ = false;
+  }
   device::Intr intr (fx_, fy_, cx_, cy_);
 
   if (!disable_icp_)
@@ -276,7 +281,7 @@ pcl::gpu::KinfuTracker::operator() (const DepthMap& depth_raw,
           device::tranformMaps (vmaps_curr_[i], nmaps_curr_[i], device_Rcam, device_tcam, vmaps_g_prev_[i], nmaps_g_prev_[i]);
 
         ++global_time_;
-        return (false);
+        return (true);
       }
 
       ///////////////////////////////////////////////////////////////////////////////////////////
@@ -344,7 +349,8 @@ pcl::gpu::KinfuTracker::operator() (const DepthMap& depth_raw,
             {
               if (pcl_isnan (det)) cout << "qnan" << endl;
 
-              reset ();
+              // SDM reset ();
+              will_be_reset_ = true;
               return (false);
             }
             //float maxc = A.maxCoeff();

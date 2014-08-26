@@ -299,6 +299,9 @@ namespace pcl
 public:
 EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+protected:
+  bool will_be_reset_;
+
     };
   }
 };

@@ -197,7 +197,7 @@ pcl::visualization::context_items::Polygon::Paint (vtkContext2D *painter)
 {
   painter->GetBrush ()->SetColor (colors);
   painter->GetPen ()->SetColor (colors);
-  painter->DrawPolygon (&params[0], static_cast<int> (params.size () / 2));
+  //painter->DrawPolygon (&params[0], static_cast<int> (params.size () / 2));
   return (true);
 }
 

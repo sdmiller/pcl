@@ -160,7 +160,7 @@ namespace pcl
       void draw (vtkContext2D * painter)
       {
         applyInternals(painter);  
-        painter->DrawPolygon (&info_[0], static_cast<unsigned int> (info_.size ()) / 2);
+        //painter->DrawPolygon (&info_[0], static_cast<unsigned int> (info_.size ()) / 2);
       }
     };
     

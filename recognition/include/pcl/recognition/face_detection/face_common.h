@@ -31,10 +31,12 @@ namespace pcl
 
         float threshold_;
         int used_ii_;
+        int scale_; // amount to scale cols/etc by after loading
 
         FeatureType()
         {
           used_ii_ = 0;
+          scale_ = 1;
         }
 
         void serialize(std::ostream & stream) const
@@ -63,6 +65,15 @@ namespace pcl
           stream.read (reinterpret_cast<char*> (&wsizey2_), sizeof(wsizey2_));
           stream.read (reinterpret_cast<char*> (&threshold_), sizeof(threshold_));
           stream.read (reinterpret_cast<char*> (&used_ii_), sizeof(used_ii_));
+          row1_ /= scale_;
+          col1_ /= scale_;
+          row2_ /= scale_;
+          col2_ /= scale_;
+          wsizex1_ /= scale_;
+          wsizex2_ /= scale_;
+          wsizey1_ /= scale_;
+          wsizey2_ /= scale_;
+
         }
     };
 

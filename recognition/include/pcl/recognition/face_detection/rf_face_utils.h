@@ -12,6 +12,7 @@
 #include <pcl/ml/feature_handler.h>
 #include <pcl/ml/stats_estimator.h>
 #include <pcl/ml/branch_estimator.h>
+#include <pcl/console/print.h>
 
 namespace pcl
 {
@@ -43,6 +44,7 @@ namespace pcl
         {
           wsize_ = w;
         }
+
 
         /** \brief Sets the number of channels a feature has (i.e. 1 - depth, 4 - depth + normals)
          * \param[in] nf Number of channels.
@@ -180,6 +182,7 @@ namespace pcl
             result = static_cast<float> ((sum_f1 / static_cast<float>(el_f1) - sum_f2 / static_cast<float>(el_f2)) > feature.threshold_);
             flag = 0;
           }
+          //PCL_INFO ("sum_f1/el_f1: %f, sum_f2/el_f2: %f, threshold: %f\n", sum_f1/el_f1, sum_f2/el_f2, feature.threshold_);
 
         }
 
@@ -434,7 +437,7 @@ namespace pcl
                 * hp[branch_index];
           }
 
-          return information_gain;
+          return (information_gain); // exp?
         }
 
         /** \brief Computes the branch indices for all supplied results.

@@ -7,7 +7,7 @@
 
 #include "pcl/recognition/face_detection/rf_face_detector_trainer.h"
 #include <pcl/console/parse.h>
-
+#include <pcl/console/print.h>
 int main(int argc, char ** argv)
 {
   int ntrees = 10;
@@ -16,6 +16,8 @@ int main(int argc, char ** argv)
   std::string directory = "";
   int use_normals = 0;
   int num_images = 3000;
+  int wsize = 40;
+  int target_width = 320;
 
   pcl::console::parse_argument (argc, argv, "-ntrees", ntrees);
   pcl::console::parse_argument (argc, argv, "-forest_fn", forest_fn);
@@ -23,11 +25,16 @@ int main(int argc, char ** argv)
   pcl::console::parse_argument (argc, argv, "-directory", directory);
   pcl::console::parse_argument (argc, argv, "-use_normals", use_normals);
   pcl::console::parse_argument (argc, argv, "-num_images", num_images);
+  pcl::console::parse_argument (argc, argv, "-wsize", wsize);
+  pcl::console::parse_argument (argc, argv, "-target_width", target_width);
+  PCL_INFO ("Using wsize of %d, target width of %d\n, normals %d\n", wsize, target_width, use_normals);
 
   pcl::RFFaceDetectorTrainer fdrf;
   fdrf.setForestFilename (forest_fn);
   fdrf.setDirectory (directory);
-  fdrf.setWSize (80);
+  fdrf.setWSize (wsize);
+  fdrf.setTargetWidth (target_width);
+  fdrf.setMaxPatchSize (wsize/2);
   fdrf.setNumTrees (ntrees);
   fdrf.setNumFeatures (n_features);
   fdrf.setUseNormals (static_cast<bool> (use_normals));

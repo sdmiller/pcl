@@ -56,6 +56,7 @@ void pcl::RFFaceDetectorTrainer::trainWithDataProvider()
   dtdp->setWSize (w_size_);
   dtdp->setNumImages (num_images_);
   dtdp->setMinImagesPerBin (300);
+  dtdp->setTargetWidth (target_width_);
 
   dtdp->initialize (directory_);
 
@@ -70,12 +71,15 @@ void pcl::RFFaceDetectorTrainer::trainWithDataProvider()
 
   PCL_INFO("Finished training forest...\n");
 
+  PCL_INFO ("Forest has %d nodes\n", (int) getNumberOfNodes (forest));
+
   std::filebuf fb;
   fb.open (forest_filename_.c_str (), std::ios::out);
   std::ostream os (&fb);
   forest.serialize (os);
   fb.close ();
 }
+      
 
 void pcl::RFFaceDetectorTrainer::faceVotesClustering()
 {
@@ -379,14 +383,14 @@ void pcl::RFFaceDetectorTrainer::detectFaces()
               Eigen::Vector3f head_center = Eigen::Vector3f (static_cast<float>(leaves[l].trans_mean_[0]),
                                                              static_cast<float>(leaves[l].trans_mean_[1]),
                                                              static_cast<float>(leaves[l].trans_mean_[2]));
-              head_center *= 0.001f;
+             head_center *= 0.001f; //convert back to meters
 
               pcl::PointXYZ patch_center_point;
               patch_center_point.x = cloud->at (col + w_size_2, row + w_size_2).x;
               patch_center_point.y = cloud->at (col + w_size_2, row + w_size_2).y;
               patch_center_point.z = cloud->at (col + w_size_2, row + w_size_2).z;
 
-              head_center = patch_center_point.getVector3fMap () + head_center;
+            head_center = patch_center_point.getVector3fMap () + head_center;
 
               pcl::PointXYZ ppp;
               ppp.getVector3fMap () = head_center;
@@ -401,7 +405,7 @@ void pcl::RFFaceDetectorTrainer::detectFaces()
               }
 
               head_center_votes_.push_back (head_center);
-              float mult_fact = 0.0174532925f;
+              float mult_fact = 0.0174532925f; //convert back to radians
               angle_votes_.push_back (
                   Eigen::Vector3f (static_cast<float>(leaves[l].rot_mean_[0]) * mult_fact,
                                    static_cast<float>(leaves[l].rot_mean_[1]) * mult_fact,

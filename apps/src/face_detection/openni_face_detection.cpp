@@ -28,6 +28,11 @@ void run(pcl::RFFaceDetectorTrainer & fdrf, bool heat_map = false, bool show_vot
   while (camera.isActive ())
   {
     scene_vis = camera.snap ();
+    if (!scene_vis)
+    {
+      boost::this_thread::sleep (boost::posix_time::milliseconds (30));
+      continue;
+    }
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr scene (new pcl::PointCloud<pcl::PointXYZ> ());
     pcl::copyPointCloud (*scene_vis, *scene);
@@ -92,6 +97,7 @@ int main(int argc, char ** argv)
   int show_votes = 0;
   int pose_refinement_ = 0;
   int icp_iterations = 5;
+  int wsize = 80;
 
   std::string forest_fn = "../data/forests/forest.txt";
   std::string model_path_ = "../data/ply_models/face.pcd";
@@ -107,10 +113,11 @@ int main(int argc, char ** argv)
   pcl::console::parse_argument (argc, argv, "-pose_refinement", pose_refinement_);
   pcl::console::parse_argument (argc, argv, "-model_path", model_path_);
   pcl::console::parse_argument (argc, argv, "-icp_iterations", icp_iterations);
+  pcl::console::parse_argument (argc, argv, "-wsize", wsize);
 
   pcl::RFFaceDetectorTrainer fdrf;
   fdrf.setForestFilename (forest_fn);
-  fdrf.setWSize (80);
+  fdrf.setWSize (wsize);
   fdrf.setUseNormals (static_cast<bool> (use_normals));
   fdrf.setWStride (STRIDE_SW);
   fdrf.setLeavesFaceMaxVariance (trans_max_variance);
@@ -132,6 +139,9 @@ int main(int argc, char ** argv)
   pcl::DecisionForest<NodeType> forest;
   forest.deserialize (os);
   fb.close ();
+  
+
+  PCL_INFO ("read forest with %d total nodes\n", (int) getNumberOfNodes (forest));
 
   fdrf.setForest (forest);
 

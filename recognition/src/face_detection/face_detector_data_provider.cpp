@@ -3,7 +3,6 @@
 #include <pcl/common/time.h>
 #include <pcl/features/integral_image_normal.h>
 #include <pcl/io/pcd_io.h>
-
 //Uncomment the following lines and set PCL_FACE_DETECTION_VIS_TRAINING_FDDP to 1
 //to visualize the training process and change the CMakeLists.txt accordingly.
 //#include <pcl/visualization/pcl_visualizer.h>
@@ -92,6 +91,7 @@ void pcl::face_detection::FaceDetectorDataProvider<FeatureType, DataSet, LabelTy
     filestream_pose << data_dir << "/" << pose_file;
     pose_file = filestream_pose.str ();
 
+    PCL_INFO ("Reading matrix from %s\n", pose_file.c_str ());
     bool result = readMatrixFromFile (pose_file, pose_mat);
     if (result)
     {
@@ -164,6 +164,25 @@ void pcl::face_detection::FaceDetectorDataProvider<FeatureType, DataSet, LabelTy
   std::cout << "Total number of images in the dataset:" << image_files_.size () << std::endl;
 }
 
+template <typename PointType>
+boost::shared_ptr<pcl::PointCloud <PointType> >
+downsampleCloud (boost::shared_ptr <pcl::PointCloud <PointType> > cloud, int scale)
+{
+  boost::shared_ptr<pcl::PointCloud <PointType> > cloud_down (new pcl::PointCloud <PointType> (cloud->width/scale, cloud->height/scale));
+  cloud_down->is_dense = false;
+  for (int y = 0; y < cloud_down->height; y++)
+  {
+    for (int x = 0; x < cloud_down->width; x++)
+    {
+      (*cloud_down) (x, y) = (*cloud) (scale*x, scale*y);
+    }
+  }
+  return (cloud_down);
+}
+
+
+
+
 //shuffle file and get the first num_images_ as requested by a tree
 //extract positive and negative samples
 //create training examples and labels
@@ -202,14 +221,19 @@ void pcl::face_detection::FaceDetectorDataProvider<FeatureType, DataSet, LabelTy
     }
     //1. Load clouds with and without labels
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
-    pcl::PointCloud<pcl::PointXYZ>::Ptr loaded_cloud (new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr loaded_cloud_orig (new pcl::PointCloud<pcl::PointXYZ>);
 
-    pcl::io::loadPCDFile (files[j], *loaded_cloud);
+    pcl::io::loadPCDFile (files[j], *loaded_cloud_orig);
 
     pcl::PointCloud<pcl::PointXYZL>::Ptr cloud_labels (new pcl::PointCloud<pcl::PointXYZL>);
-    pcl::PointCloud<pcl::PointXYZL>::Ptr loaded_cloud_labels (new pcl::PointCloud<pcl::PointXYZL>);
-    pcl::io::loadPCDFile (files[j], *loaded_cloud_labels);
+    pcl::PointCloud<pcl::PointXYZL>::Ptr loaded_cloud_labels_orig (new pcl::PointCloud<pcl::PointXYZL>);
+    pcl::io::loadPCDFile (files[j], *loaded_cloud_labels_orig);
 
+    // Resize both
+    int scale = loaded_cloud_orig->width / target_width_;
+    pcl::PointCloud<pcl::PointXYZ>::Ptr loaded_cloud = downsampleCloud<pcl::PointXYZ> (loaded_cloud_orig, scale); 
+    pcl::PointCloud<pcl::PointXYZL>::Ptr loaded_cloud_labels = downsampleCloud<pcl::PointXYZL> (loaded_cloud_labels_orig, scale); 
+    PCL_INFO ("Downsampled cloud from %d x %d to %d x %d\n", loaded_cloud_orig->width, loaded_cloud_orig->height, loaded_cloud->width, loaded_cloud->height);
     //crop images to remove as many NaNs as possible and reduce the memory footprint
     {
       size_t min_col, min_row;
@@ -356,6 +380,7 @@ void pcl::face_detection::FaceDetectorDataProvider<FeatureType, DataSet, LabelTy
 
     Eigen::Matrix4f pose_mat;
     pose_mat.setIdentity (4, 4);
+    PCL_INFO ("Reading matrix from %s\n", pose_file.c_str ());
     readMatrixFromFile (pose_file, pose_mat);
 
     Eigen::Vector3f ea = pose_mat.block<3, 3> (0, 0).eulerAngles (0, 1, 2);
@@ -523,7 +548,7 @@ void pcl::face_detection::FaceDetectorDataProvider<FeatureType, DataSet, LabelTy
     }
   }
 
-  std::cout << training_examples.size () << " " << labels.size () << " " << total_neg << " " << total_pos << std::endl;
+  std::cout << "Training examples: " << training_examples.size () << ", Labels: " << labels.size () << ", Negative: " << total_neg << ", Positive: " << total_pos << std::endl;
 
   //train random forest and make persistent
   std::vector<int> example_indices;

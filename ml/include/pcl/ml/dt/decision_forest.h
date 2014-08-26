@@ -39,6 +39,7 @@
 #define PCL_ML_DT_DECISION_FOREST_H_
 
 #include <pcl/common/common.h>
+#include <pcl/console/print.h>
 
 #include <pcl/ml/dt/decision_tree.h>
 
@@ -105,6 +106,7 @@ namespace pcl
       {
         int num_of_trees;
         stream.read (reinterpret_cast<char*> (&num_of_trees), sizeof (num_of_trees));
+        PCL_INFO ("Decision forest found %d trees\n", num_of_trees);
         this->resize (num_of_trees);
 
         for (size_t tree_index = 0; tree_index < this->size (); ++tree_index)

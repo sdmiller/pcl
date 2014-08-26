@@ -16,7 +16,6 @@
 #include <fstream>
 #include <string>
 #include <boost/algorithm/string.hpp>
-
 namespace bf = boost::filesystem;
 
 namespace pcl
@@ -33,6 +32,7 @@ namespace pcl
         int w_size_;
         int patches_per_image_;
         int min_images_per_bin_;
+        int target_width_;
 
         void getFilesInDirectory(bf::path & dir, std::string & rel_path_so_far, std::vector<std::string> & relative_paths, std::string & ext)
         {
@@ -130,11 +130,12 @@ namespace pcl
 
         FaceDetectorDataProvider()
         {
-          w_size_ = 80;
-          USE_NORMALS_ = false;
+          w_size_ = 40;
+          USE_NORMALS_ = true;
           num_images_ = 10;
           patches_per_image_ = 20;
           min_images_per_bin_ = -1;
+          target_width_ = 320;
         }
 
         virtual ~FaceDetectorDataProvider()
@@ -160,6 +161,11 @@ namespace pcl
         void setWSize(int size)
         {
           w_size_ = size;
+        }
+
+        void setTargetWidth (int target_width)
+        {
+          target_width_ = target_width;
         }
 
         void setNumImages(int n)

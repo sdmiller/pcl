@@ -60,8 +60,10 @@ void
 pcl::DecisionForestTrainer<FeatureType, DataSet, LabelType, ExampleIndex, NodeType>::train (
   pcl::DecisionForest<NodeType> & forest)
 {
+//#pragma omp parallel for
   for (size_t tree_index = 0; tree_index < num_of_trees_to_train_; ++tree_index)
   {
+    //srand(int(time(NULL)) ^ omp_get_thread_num()); 
     pcl::DecisionTree<NodeType> tree;
     decision_tree_trainer_.train (tree);
 

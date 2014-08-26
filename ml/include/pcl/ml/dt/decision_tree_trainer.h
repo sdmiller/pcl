@@ -192,7 +192,8 @@ namespace pcl
         * \param[out] node The resulting node.
         */
       void
-      trainDecisionTreeNode (std::vector<FeatureType> & features,
+      trainDecisionTreeNode (DataSet & data_set,
+                             std::vector<FeatureType> & features,
                              std::vector<ExampleIndex> & examples,
                              std::vector<LabelType> & label_data,
                              size_t max_depth,

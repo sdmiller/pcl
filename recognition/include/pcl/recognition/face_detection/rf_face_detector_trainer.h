@@ -15,6 +15,30 @@
 
 namespace pcl
 {
+  typedef face_detection::RFTreeNode<face_detection::FeatureType> FDNodeType;
+  
+  inline void
+  addNumberOfNodesInTree (FDNodeType &node, size_t &total)
+  {
+    total += 1;
+    for (size_t i = 0; i < node.sub_nodes.size (); i++)
+    {
+      addNumberOfNodesInTree (node.sub_nodes[i], total);
+    }
+  }
+
+  inline size_t
+  getNumberOfNodes (pcl::DecisionForest<FDNodeType> &forest)
+  {
+    size_t total = 0;
+    for (size_t i = 0; i < forest.size (); i++)
+    {
+      pcl::DecisionTree<FDNodeType> &tree = forest[i];
+      addNumberOfNodesInTree (tree.getRoot (), total);
+    }
+    return (total);
+  }
+
   class PCL_EXPORTS RFFaceDetectorTrainer
   {
     private:
@@ -28,6 +52,7 @@ namespace pcl
       int num_images_;
       float trans_max_variance_;
       size_t min_votes_size_;
+      int target_width_;
       int used_for_pose_;
       bool use_normals_;
       std::string directory_;
@@ -99,6 +124,16 @@ namespace pcl
       void setWSize(int s)
       {
         w_size_ = s;
+      }
+
+      void setTargetWidth (int target_width)
+      {
+        target_width_ = target_width;
+      }
+
+      void setMaxPatchSize(int s)
+      {
+        max_patch_size_ = s;
       }
 
       /*

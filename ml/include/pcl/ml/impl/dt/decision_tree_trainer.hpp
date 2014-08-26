@@ -82,15 +82,20 @@ pcl::DecisionTreeTrainer<FeatureType, DataSet, LabelType, ExampleIndex, NodeType
   {
     std::cerr << "use decision_tree_trainer_data_provider_" << std::endl;
 
-    decision_tree_trainer_data_provider_->getDatasetAndLabels (data_set_, label_data_, examples_);
-    trainDecisionTreeNode (features, examples_, label_data_, max_tree_depth_, tree.getRoot ());
-    label_data_.clear ();
-    data_set_.clear ();
-    examples_.clear ();
+    DataSet data_set;
+    std::vector<LabelType> label_data;
+    std::vector<ExampleIndex> examples;
+    decision_tree_trainer_data_provider_->getDatasetAndLabels (data_set, label_data, examples);
+    trainDecisionTreeNode (data_set, features, examples, label_data, max_tree_depth_, tree.getRoot ());
+    //decision_tree_trainer_data_provider_->getDatasetAndLabels (data_set_, label_data_, examples_);
+    //trainDecisionTreeNode (features, examples_, label_data_, max_tree_depth_, tree.getRoot ());
+    //label_data_.clear ();
+    //data_set_.clear ();
+    //examples_.clear ();
   }
   else
   {
-    trainDecisionTreeNode (features, examples_, label_data_, max_tree_depth_, tree.getRoot ());
+    trainDecisionTreeNode (data_set_, features, examples_, label_data_, max_tree_depth_, tree.getRoot ());
   }
 }
 
@@ -99,6 +104,7 @@ pcl::DecisionTreeTrainer<FeatureType, DataSet, LabelType, ExampleIndex, NodeType
 template <class FeatureType, class DataSet, class LabelType, class ExampleIndex, class NodeType>
 void
 pcl::DecisionTreeTrainer<FeatureType, DataSet, LabelType, ExampleIndex, NodeType>::trainDecisionTreeNode (
+  DataSet & data_set,
   std::vector<FeatureType> & features,
   std::vector<ExampleIndex> & examples,
   std::vector<LabelType> & label_data,
@@ -114,12 +120,12 @@ pcl::DecisionTreeTrainer<FeatureType, DataSet, LabelType, ExampleIndex, NodeType
 
   if (max_depth == 0)
   {
-    stats_estimator_->computeAndSetNodeStats(data_set_, examples, label_data, node);
+    stats_estimator_->computeAndSetNodeStats(data_set, examples, label_data, node);
     return;
   };
 
   if(examples.size () < min_examples_for_split_) {
-    stats_estimator_->computeAndSetNodeStats (data_set_, examples, label_data, node);
+    stats_estimator_->computeAndSetNodeStats (data_set, examples, label_data, node);
     return;
   }
 
@@ -137,14 +143,14 @@ pcl::DecisionTreeTrainer<FeatureType, DataSet, LabelType, ExampleIndex, NodeType
   // find best feature for split
   int best_feature_index = -1;
   float best_feature_threshold = 0.0f;
-  float best_feature_information_gain = 0.0f;
+  float best_feature_information_gain = -std::numeric_limits<float>::infinity ();//0.0f;
 
   const size_t num_of_features = features.size ();
   for (size_t feature_index = 0; feature_index < num_of_features; ++feature_index)
   {
     // evaluate features
     feature_handler_->evaluateFeature (features[feature_index],
-                                       data_set_,
+                                       data_set,
                                        examples,
                                        feature_results,
                                        flags );
@@ -156,13 +162,15 @@ pcl::DecisionTreeTrainer<FeatureType, DataSet, LabelType, ExampleIndex, NodeType
       for (size_t threshold_index = 0; threshold_index < thresholds_.size (); ++threshold_index)
       {
 
-        const float information_gain = stats_estimator_->computeInformationGain (data_set_,
+        const float information_gain = stats_estimator_->computeInformationGain (data_set,
                                                                                  examples,
                                                                                  label_data,
                                                                                  feature_results,
                                                                                  flags,
                                                                                  thresholds_[threshold_index]);
 
+        //PCL_INFO ("information_gain: %f\n", information_gain);
+        //PCL_INFO ("best_feature_information_gain: %f\n", best_feature_information_gain);
         if (information_gain > best_feature_information_gain)
         {
           best_feature_information_gain = information_gain;
@@ -183,13 +191,15 @@ pcl::DecisionTreeTrainer<FeatureType, DataSet, LabelType, ExampleIndex, NodeType
 				const float threshold = thresholds[threshold_index];
 
 				// compute information gain
-				const float information_gain = stats_estimator_->computeInformationGain (data_set_,
+				const float information_gain = stats_estimator_->computeInformationGain (data_set,
 																																								 examples,
 																																								 label_data,
 																																								 feature_results,
 																																								 flags,
 																																								 threshold);
 
+        //PCL_INFO ("information_gain: %f\n", information_gain);
+        //PCL_INFO ("best_feature_information_gain: %f\n", best_feature_information_gain);
 				if (information_gain > best_feature_information_gain)
 				{
 					best_feature_information_gain = information_gain;
@@ -202,7 +212,7 @@ pcl::DecisionTreeTrainer<FeatureType, DataSet, LabelType, ExampleIndex, NodeType
 
   if (best_feature_index == -1)
   {
-    stats_estimator_->computeAndSetNodeStats (data_set_, examples, label_data, node);
+    stats_estimator_->computeAndSetNodeStats (data_set, examples, label_data, node);
     return;
   }
 
@@ -211,7 +221,7 @@ pcl::DecisionTreeTrainer<FeatureType, DataSet, LabelType, ExampleIndex, NodeType
   branch_indices.reserve (num_of_examples);
   {
     feature_handler_->evaluateFeature (features[best_feature_index],
-                                       data_set_,
+                                       data_set,
                                        examples,
                                        feature_results,
                                        flags );
@@ -222,7 +232,7 @@ pcl::DecisionTreeTrainer<FeatureType, DataSet, LabelType, ExampleIndex, NodeType
                                             branch_indices);
   } 
 
-  stats_estimator_->computeAndSetNodeStats (data_set_, examples, label_data, node);
+  stats_estimator_->computeAndSetNodeStats (data_set, examples, label_data, node);
 
   // separate data
   {
@@ -243,7 +253,7 @@ pcl::DecisionTreeTrainer<FeatureType, DataSet, LabelType, ExampleIndex, NodeType
       if (branch_counts[branch_index] == 0)
       {
         NodeType branch_node;
-        stats_estimator_->computeAndSetNodeStats (data_set_, examples, label_data, branch_node);
+        stats_estimator_->computeAndSetNodeStats (data_set, examples, label_data, branch_node);
         //branch_node->num_of_sub_nodes = 0;
 
         node.sub_nodes[branch_index] = branch_node;
@@ -265,7 +275,7 @@ pcl::DecisionTreeTrainer<FeatureType, DataSet, LabelType, ExampleIndex, NodeType
         }
       }
 
-      trainDecisionTreeNode (features, branch_examples, branch_labels, max_depth-1, node.sub_nodes[branch_index]);
+      trainDecisionTreeNode (data_set, features, branch_examples, branch_labels, max_depth-1, node.sub_nodes[branch_index]);
     }
   }
 }
